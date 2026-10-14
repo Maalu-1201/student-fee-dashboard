@@ -1,23 +1,23 @@
-# Student Fee Management Dashboard
+# Student Fee Management Dashboard (Next.js)
 
 ## 1. Project Overview
 
-A responsive React dashboard for student fee information. It shows total students, total fees, total collected and total pending, plus a student table (name, class, total fee, paid, pending) with name search, a "pending only" filter, sorting by pending amount, and a clear visual difference between fully paid (green) and pending (orange) students. Empty search results show a friendly message with a "Clear filters" button.
+A responsive Next.js (App Router) dashboard for student fee information. It shows total students, total fees, total collected and total pending, plus a student table (name, class, total fee, paid, pending, progress) with name search, a "pending only" filter, sorting by pending amount, and a clear visual difference between fully paid (green) and pending (orange) students. Student data comes from a small backend API (`GET /api/students`). Empty search results, loading and API errors are handled with friendly messages.
 
 ## 2. Technologies Used
 
-- React 18 (functional components, hooks)
-- Vite (dev server and build)
+- Next.js 14 (App Router, Route Handlers) and React 18
 - Plain CSS (responsive, no framework)
 - JavaScript (ES modules)
-- SQL (PostgreSQL syntax)
+- SQL (PostgreSQL syntax) for the database design
+- Deployed on Vercel
 
 ## 3. Setup and Installation
 
-Requirements: Node.js 18 or newer.
+Requirements: Node.js 18.17 or newer.
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Maalu-1201/student-fee-dashboard.git
 cd student-fee-dashboard
 npm install
 ```
@@ -25,40 +25,43 @@ npm install
 ## 4. How to Run Locally
 
 ```bash
-npm run dev          # open http://localhost:5173
+npm run dev          # open http://localhost:3000
 npm run test:logic   # checks for the JavaScript problems
-npm run build        # production build
+npm run build && npm start   # production build
 ```
 
 ## Live Demo
 
-Live URL: https://<your-github-username>.github.io/student-fee-dashboard/
-(Deployed automatically to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.)
+Live URL: https://<your-vercel-url>.vercel.app
 
 ## Project Structure
 
 ```
-src/
-  App.jsx                          state and wiring
-  components/                      SummaryCards, Controls, StudentTable
-  utils/feeCalculations.js         pure functions (Problems 1-4, search, sort)
-  utils/feeCalculations.check.js   assertions for the functions
-  data/students.js                 sample data
-sql/schema_and_queries.sql         schema, queries and explanations
+app/
+  layout.jsx               root layout (Server Component)
+  page.jsx                 home page (Server Component)
+  globals.css              styles
+  api/students/route.js    backend API: GET /api/students
+components/
+  Dashboard.jsx            Client Component: fetch, state, search/filter/sort
+  SummaryCards.jsx, Controls.jsx, StudentTable.jsx
+lib/feeCalculations.js     pure calculation functions (Problems 1-4)
+lib/feeCalculations.check.js  assertions for the functions
+data/students.js           data layer used by the API
+sql/schema_and_queries.sql schema, queries and explanations
 ```
 
 ## 5. Assumptions and Known Limitations
 
-- Data is hard-coded sample data. There is no backend or live database.
+- The API reads from an in-memory data module (`data/students.js`), not a live database. The data layer is one function (`getStudents`), so it can be replaced by a real database query without changing the frontend.
 - Currency is INR and amounts are whole rupees.
 - If paid is more than total fee, pending is shown as 0 and the student is "Fully paid".
-- Sorting cycles through: none, high to low, low to high.
+- There is no authentication and no create/update API (read-only).
 - Only logic checks are automated. There are no UI tests.
-- Bonus tasks (Next.js, Vercel, database integration) are not included.
 
 ## 6. Answers: JavaScript and Logic Questions
 
-**Problem 1: calculatePending** is in `src/utils/feeCalculations.js`.
+**Problem 1: calculatePending** is in `lib/feeCalculations.js`.
 `calculatePending(5000, 3000)` returns 2000 and `calculatePending(4000, 4000)` returns 0.
 _Paid amount greater than total fee:_ the function returns `Math.max(total - paid, 0)`, so pending is never negative. The extra money is available through `getOverpaid()` so it can be treated as a credit or refund instead of being lost. Invalid input (negative or non-number) throws an error.
 
@@ -127,10 +130,35 @@ CREATE TABLE payments (
 
 _Multiple payments by the same student:_ this is a one-to-many relationship. One student can have many rows in `payments`, one per installment. Paid amount is always calculated as `SUM(payments.amount)`, and pending is `total_fee - paid`. Indexes on `student_id` and `payment_date` keep lookups and monthly reports fast.
 
-## 8. Additional Notes
+## 8. Bonus A: Next.js (App Router)
 
-The app is split into small reusable components, and all calculations are kept in pure functions separate from the UI so they can be tested without React. Edge cases handled: empty search results, overpayment, invalid numbers, empty student list.
+The project uses the App Router: routes are folders inside `app/`. `app/page.jsx` is the home route `/`, `app/layout.jsx` wraps every page, and `app/api/students/route.js` is a Route Handler that becomes the endpoint `/api/students`.
 
-## 9. AI Usage Disclosure
+**Server Components vs Client Components**
 
-_Edit this honestly before submitting._ Example: I used Claude to generate the initial project scaffold and draft of the README and SQL. I then ran the project, reviewed every file, tested the features and I can explain the code which i am working.
+- _Server Components_ (the default in `app/`) render on the server. They send HTML and no component JavaScript to the browser, can read server-only resources directly, but cannot use `useState`, `useEffect` or event handlers.
+- _Client Components_ (files starting with `"use client"`) are also pre-rendered but then hydrate in the browser, so they can use state, effects and handlers like `onClick`/`onChange`.
+- In this project `app/layout.jsx` and `app/page.jsx` are Server Components (page shell and metadata). `components/Dashboard.jsx` is a Client Component because it keeps state (search, filter, sort), fetches data in an effect and handles clicks. The components it imports become part of the client bundle too.
+- Trade-off I chose on purpose: the page could fetch the data directly in a Server Component, but I fetch from the API in the client to show the frontend-to-backend flow and handle loading and error states.
+
+## 9. Bonus B: Vercel Deployment
+
+1. Push the repo to GitHub.
+2. On vercel.com choose Add New, Project, import the repo (Next.js is auto-detected).
+3. Click Deploy. Every push to `main` redeploys automatically.
+
+Live URL: see "Live Demo" above.
+
+## 10. Bonus C: Backend API
+
+- **Endpoint:** `GET /api/students` returns `{ "students": [...] }` as JSON. It calls `getStudents()` in `data/students.js` (the data layer; a database query can replace its body).
+- **How the frontend talks to the backend:** `Dashboard.jsx` calls `fetch("/api/students")` when it mounts, stores the result in state, then computes pending amounts and totals with the pure functions in `lib/feeCalculations.js`.
+- **Error handling:** the route handler wraps the call in `try/catch`, logs the real error on the server and returns a safe JSON message with HTTP status 500. The client checks `response.ok`, reads the error message, and shows an error box with a "Try again" button. Network failures are caught the same way. While waiting, a loading message is shown.
+
+## 11. Additional Notes
+
+Components are small and reusable, and all calculations are pure functions separate from the UI so they can be tested without React. Edge cases handled: empty search results, overpayment, invalid numbers, empty student list, API failure.
+
+## 12. AI Usage Disclosure
+
+I used Claude to help scaffold the project, write the initial code, SQL and README. I then ran the project locally, tested every feature, reviewed the code, and I can explain each part.
