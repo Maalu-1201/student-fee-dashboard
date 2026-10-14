@@ -32,7 +32,8 @@ npm run build && npm start   # production build
 
 ## Live Demo
 
-Live URL: https://<your-vercel-url>.vercel.app
+Live URL: (https://student-fee-dashboard-phi.vercel.app/)
+
 
 ## Project Structure
 
