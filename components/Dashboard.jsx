@@ -56,7 +56,7 @@ export default function Dashboard() {
       <header className="hero">
         <div className="hero-inner">
           <div>
-            <h1>Student fees</h1>
+            <h1>Student Fee Management</h1>
             <p>Who has paid, and who still owes.</p>
           </div>
           <div className="meter" role="img" aria-label={`${collectedPercent}% of fees collected`}>

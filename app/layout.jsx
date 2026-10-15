@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Student Fee Dashboard",
+  title: "Student Fee Management",
   description: "Track paid and pending student fees.",
 };
 
