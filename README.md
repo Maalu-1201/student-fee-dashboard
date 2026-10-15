@@ -32,7 +32,7 @@ npm run build && npm start   # production build
 
 ## Live Demo
 
-Live URL: https://<your-vercel-url>.vercel.app
+Live URL: Live URL: https://student-fee-dashboard-phi.vercel.app
 
 ## Project Structure
 
@@ -130,35 +130,14 @@ CREATE TABLE payments (
 
 _Multiple payments by the same student:_ this is a one-to-many relationship. One student can have many rows in `payments`, one per installment. Paid amount is always calculated as `SUM(payments.amount)`, and pending is `total_fee - paid`. Indexes on `student_id` and `payment_date` keep lookups and monthly reports fast.
 
-## 8. Bonus A: Next.js (App Router)
-
-The project uses the App Router: routes are folders inside `app/`. `app/page.jsx` is the home route `/`, `app/layout.jsx` wraps every page, and `app/api/students/route.js` is a Route Handler that becomes the endpoint `/api/students`.
-
-**Server Components vs Client Components**
-
-- _Server Components_ (the default in `app/`) render on the server. They send HTML and no component JavaScript to the browser, can read server-only resources directly, but cannot use `useState`, `useEffect` or event handlers.
-- _Client Components_ (files starting with `"use client"`) are also pre-rendered but then hydrate in the browser, so they can use state, effects and handlers like `onClick`/`onChange`.
-- In this project `app/layout.jsx` and `app/page.jsx` are Server Components (page shell and metadata). `components/Dashboard.jsx` is a Client Component because it keeps state (search, filter, sort), fetches data in an effect and handles clicks. The components it imports become part of the client bundle too.
-- Trade-off I chose on purpose: the page could fetch the data directly in a Server Component, but I fetch from the API in the client to show the frontend-to-backend flow and handle loading and error states.
-
-## 9. Bonus B: Vercel Deployment
+## 8. Bonus B: Vercel Deployment
 
 1. Push the repo to GitHub.
 2. On vercel.com choose Add New, Project, import the repo (Next.js is auto-detected).
 3. Click Deploy. Every push to `main` redeploys automatically.
 
-Live URL: see "Live Demo" above.
+Live URL: student-fee-dashboard-phi.vercel.app
 
-## 10. Bonus C: Backend API
+## 9. AI Usage Disclosure
 
-- **Endpoint:** `GET /api/students` returns `{ "students": [...] }` as JSON. It calls `getStudents()` in `data/students.js` (the data layer; a database query can replace its body).
-- **How the frontend talks to the backend:** `Dashboard.jsx` calls `fetch("/api/students")` when it mounts, stores the result in state, then computes pending amounts and totals with the pure functions in `lib/feeCalculations.js`.
-- **Error handling:** the route handler wraps the call in `try/catch`, logs the real error on the server and returns a safe JSON message with HTTP status 500. The client checks `response.ok`, reads the error message, and shows an error box with a "Try again" button. Network failures are caught the same way. While waiting, a loading message is shown.
-
-## 11. Additional Notes
-
-Components are small and reusable, and all calculations are pure functions separate from the UI so they can be tested without React. Edge cases handled: empty search results, overpayment, invalid numbers, empty student list, API failure.
-
-## 12. AI Usage Disclosure
-
-I used Claude to help scaffold the project, write the initial code, SQL and README. I then ran the project locally, tested every feature, reviewed the code, and I can explain each part.
+I used Claude (AI assistant) to help plan the project and generate the initial code, SQL and README draft. I set up and ran the project locally, tested all features, fixed issues while pushing to GitHub and deploying, made the commits, and deployed the app on Vercel. I reviewed the code and can explain each part.
